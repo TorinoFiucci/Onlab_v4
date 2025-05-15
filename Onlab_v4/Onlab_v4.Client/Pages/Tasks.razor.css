@@ -1,0 +1,66 @@
+﻿/* Onlab_v4.Client/Pages/Tasks.razor.css */
+
+.kanban-column {
+    background-color: #f4f5f7; /* Light grey background for columns */
+    border-radius: 8px;
+    min-height: 400px; /* Ensure columns have some height even when empty */
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-dropzone {
+    flex-grow: 1; /* Allows the dropzone to fill the column height */
+    padding: 8px;
+    min-height: 300px; /* Minimum height for the actual drop area */
+    border: 1px dashed transparent; /* Optional: show border on hover/drag */
+    border-radius: 4px;
+    background-color: #ebecf0; /* Slightly different background for drop area */
+    overflow-y: auto; /* Allow scrolling within a column if many tasks */
+    max-height: 60vh; /* Max height before scrolling */
+}
+
+    .kanban-dropzone.mud-dropitem-can-drop { /* Style when an item can be dropped */
+        border-color: var(--mud-palette-primary-darken); /* Use MudBlazor primary color */
+        background-color: var(--mud-palette-primary-lighten);
+    }
+
+.task-card {
+    margin-bottom: 12px;
+    border-left: 5px solid var(--mud-palette-primary); /* Accent color for cards */
+}
+
+/* Example: Different accent colors per status (optional) */
+.kanban-column:nth-child(1) .task-card { /* New */
+    border-left-color: #3498db; /* Blue */
+}
+
+.kanban-column:nth-child(2) .task-card { /* In Progress */
+    border-left-color: #f1c40f; /* Yellow */
+}
+
+.kanban-column:nth-child(3) .task-card { /* Review */
+    border-left-color: #e67e22; /* Orange */
+}
+
+.kanban-column:nth-child(4) .task-card { /* Done */
+    border-left-color: #2ecc71; /* Green */
+}
+
+
+.task-card .mud-card-header {
+    padding: 8px 12px; /* Adjust padding */
+}
+
+.task-card .mud-card-content {
+    padding: 8px 12px 12px 12px; /* Adjust padding */
+}
+
+/* Styling for the empty content message */
+.kanban-dropzone .mud-dropcontainer-empty-content .mud-typography-body2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 100px; /* Give it some visible space */
+    color: #757575; /* Grey text */
+}

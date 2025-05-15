@@ -1,0 +1,192 @@
+﻿@page "/tasks"
+@using Onlab.Transfer
+@using Onlab_v4.Client.Components 
+@using Onlab_v4.Client.Components.Tasks
+
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@* ... The HTML part of your Tasks.razor component ... *@
+@* ...(No changes to the HTML part for this specific error)... *@
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Task Board</MudText>
+
+    <MudGrid Spacing="3" Justify="Justify.FlexStart">
+        @foreach (var status in TaskStatuses)
+        {
+            var currentStatus = status; 
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4 kanban-column" Elevation="3">
+                    <div class="d-flex justify-space-between align-center mb-3">
+                        <MudText Typo="Typo.h6">@currentStatus</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => OpenAddTaskDialog(currentStatus))"
+                                       Title="@($"Add Task to {currentStatus}")" />
+                    </div>
+
+                    <MudDropContainer T="TaskItemModel"
+                                      Items="_tasks.Where(t => t.Status == currentStatus).OrderBy(t => t.Order).ToList()"
+                                      ItemsSelector="@((item,dropzone) => true)"
+                                      ItemDropped="((MudItemDropInfo<TaskItemModel> dropItem) => OnTaskDropped(dropItem, currentStatus))"
+                                      Class="kanban-dropzone">
+                        <ItemRenderer>
+                            <MudDropZone T="TaskItemModel" Identifier="@context.Id" AllowReorder="true" Class="my-2">
+                                <MudCard Class="task-card" Elevation="2">
+                                    <MudCardHeader>
+                                        <CardHeaderContent>
+                                            <MudText Typo="Typo.subtitle1">@context.Title</MudText>
+                                        </CardHeaderContent>
+                                        <CardHeaderActions>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteTask(context))" Title="Delete Task"/>
+                                        </CardHeaderActions>
+                                    </MudCardHeader>
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.body2">@context.Description</MudText>
+                                        @if (context.DueDate.HasValue)
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mt-2">Due: @context.DueDate.Value.ToString("yyyy.MM.dd HH:mm")</MudText>
+                                        }
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudDropZone>
+                        </ItemRenderer>
+                        <ChildContent>
+                             <MudText Typo="Typo.body2" Class="text-disabled pa-4 text-align-center">Drag tasks here or click '+' to add.</MudText>
+                        </ChildContent>
+                    </MudDropContainer>
+                </MudPaper>
+            </MudItem>
+        }
+        <MudItem xs="12" sm="6" md="3">
+             <MudTextField Label="Add new status type..." @bind-Value="newStatusName" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add" OnAdornmentClick="AddNewStatusColumn" />
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    private List<TaskItemModel> _tasks = new List<TaskItemModel>();
+    public List<string> TaskStatuses { get; set; } = new List<string> { "New", "In Progress", "Review", "Done" };
+    private string newStatusName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _tasks.AddRange(new List<TaskItemModel>
+        {
+            new TaskItemModel { Title = "Contact Metallica for joint tour", Description = "Discuss potential dates and venues for May.", Status = "New", DueDate = new DateTime(2025, 7, 12, 14, 30, 0), Order = 0 },
+            new TaskItemModel { Title = "Prepare Rider List", Description = "Finalize technical and hospitality riders.", Status = "New", DueDate = new DateTime(2025, 6, 20), Order = 1 },
+            new TaskItemModel { Title = "Book Rehearsal Studio", Description = "Find a studio for 3 days next week.", Status = "In Progress", Order = 0 },
+            new TaskItemModel { Title = "Review Album Artwork", Description = "Provide feedback on the latest design mockups.", Status = "Review", Order = 0 },
+            new TaskItemModel { Title = "Send out Press Release", Description = "Announce new single release.", Status = "Done", Order = 0 }
+        });
+    }
+
+    private async Task OpenAddTaskDialog(string status)
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<AddTaskDialog>("Add New Task", options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled) // Corrected: Canceled (one 'l')
+        {
+            if (result.Data is TaskItemModel newTask)
+            {
+                newTask.Status = status;
+                newTask.Id = Guid.NewGuid().ToString();
+                newTask.Order = _tasks.Count(t => t.Status == status);
+                _tasks.Add(newTask);
+                Snackbar.Add($"Task '{newTask.Title}' added to {status}.", Severity.Success);
+                StateHasChanged(); 
+            }
+        }
+    }
+
+    private async Task DeleteTask(TaskItemModel taskToDelete)
+    {
+        var parameters = new DialogParameters
+        {
+            ["ContentText"] = $"Do you really want to delete the task: \"{taskToDelete.Title}\"?",
+            ["ButtonText"] = "Delete",
+            ["Color"] = Color.Error
+        };
+
+        var options = new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = DialogService.Show<MudMessageBox>("Confirm Deletion", parameters, options);
+        var result = await dialog.Result;
+
+        // Corrected: Canceled (one 'l')
+        // Also ensure result itself is not null before accessing its properties
+        if (result != null && !result.Canceled && result.Data is bool boolResult && boolResult)
+        {
+            _tasks.Remove(taskToDelete);
+            Snackbar.Add($"Task '{taskToDelete.Title}' deleted.", Severity.Info);
+            ReorderTasksInColumns();
+            StateHasChanged();
+        }
+    }
+
+    private void OnTaskDropped(MudItemDropInfo<TaskItemModel> dropItem, string newStatus)
+    {
+        var task = dropItem.Item; 
+        if (task != null)
+        {
+            string oldStatus = task.Status;
+            task.Status = newStatus;
+
+            var itemsInNewZone = _tasks.Where(t => t.Status == newStatus && t.Id != task.Id).OrderBy(t => t.Order).ToList();
+            itemsInNewZone.Insert(dropItem.IndexInZone, task);
+
+            for (int i = 0; i < itemsInNewZone.Count; i++)
+            {
+                itemsInNewZone[i].Order = i;
+            }
+
+            if (oldStatus != newStatus && !string.IsNullOrEmpty(oldStatus))
+            {
+                ReorderTasksInColumn(oldStatus);
+            }
+            
+            Snackbar.Add($"Task '{task.Title}' moved to {newStatus}.", Severity.Success);
+            StateHasChanged();
+        }
+    }
+
+    private void ReorderTasksInColumn(string status)
+    {
+        var itemsInColumn = _tasks.Where(t => t.Status == status).OrderBy(t => t.Order).ToList();
+        for (int i = 0; i < itemsInColumn.Count; i++)
+        {
+            var taskToUpdate = _tasks.FirstOrDefault(t => t.Id == itemsInColumn[i].Id);
+            if(taskToUpdate != null) taskToUpdate.Order = i;
+        }
+    }
+    
+    private void ReorderTasksInColumns()
+    {
+        foreach(var status in TaskStatuses)
+        {
+            ReorderTasksInColumn(status);
+        }
+    }
+
+    private void AddNewStatusColumn()
+    {
+        if (!string.IsNullOrWhiteSpace(newStatusName) && !TaskStatuses.Any(s => s.Equals(newStatusName, StringComparison.OrdinalIgnoreCase)))
+        {
+            TaskStatuses.Add(newStatusName);
+            newStatusName = string.Empty; 
+            Snackbar.Add($"New status column '{TaskStatuses.Last()}' added.", Severity.Success);
+            StateHasChanged();
+        }
+        else if (TaskStatuses.Any(s => s.Equals(newStatusName, StringComparison.OrdinalIgnoreCase)))
+        {
+            Snackbar.Add($"Status column '{newStatusName}' already exists.", Severity.Warning);
+        }
+        else 
+        {
+            Snackbar.Add("Status name cannot be empty.", Severity.Warning);
+        }
+    }
+}

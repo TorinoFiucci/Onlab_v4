@@ -1,23 +1,42 @@
-﻿@inherits LayoutComponentBase
+﻿@* Onlab_v4.Client/Layout/MainLayout.razor *@
+@inherits LayoutComponentBase
+@using Onlab_v4.Client.Components.Layout  @* Add this if TopBar is in a subfolder *@
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<div class="page-container">
+    <TopBar /> @* Our new top navigation bar *@
+
+    <div class="main-content-wrapper">
+        <NavMenu /> @* Our modified NavMenu, acting as the sidebar *@
+
+        <main class="content-area">
+            @Body @* This is where the content of individual pages will be rendered *@
+        </main>
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+<style>
+    .page-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden; /* Prevent full page scrollbars if sidebar/topbar are fixed height */
+    }
+
+    .main-content-wrapper {
+        display: flex;
+        flex-grow: 1; /* Allows this area to fill remaining vertical space */
+        overflow: hidden; /* Important for independent scrolling of sidebar/content */
+    }
+
+    .content-area {
+        flex-grow: 1; /* Allows content area to fill remaining horizontal space */
+        padding: 1rem;
+        overflow-y: auto; /* Allow scrolling only within the content area */
+    }
+
+    /* Ensure TopBar does not get overridden by other styles easily */
+    /* TopBar specific styles are in TopBar.razor */
+
+    /* Ensure NavMenu (Sidebar) does not get overridden */
+    /* NavMenu specific styles are in NavMenu.razor */
+</style>

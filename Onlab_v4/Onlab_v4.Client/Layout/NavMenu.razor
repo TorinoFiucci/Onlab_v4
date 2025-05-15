@@ -1,92 +1,67 @@
-﻿@implements IDisposable
-
-@inject NavigationManager NavigationManager
-
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Onlab_v4</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+﻿@* Onlab_v4.Client/Layout/NavMenu.razor *@
+<div class="sidebar">
+    <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="oi oi-home" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="concerts">
+                <span class="oi oi-musical-note" aria-hidden="true"></span> Concerts
             </NavLink>
         </div>
-
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="setlists">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Setlists
             </NavLink>
         </div>
-
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
+            <NavLink class="nav-link" href="tasks">
+                <span class="oi oi-check" aria-hidden="true"></span> Tasks
             </NavLink>
         </div>
-
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
     </nav>
 </div>
 
+<style>
+    .sidebar {
+        background-color: #2c3e50; /* Dark background for sidebar */
+        width: 250px; /* Adjust as needed */
+        height: calc(100vh - 60px); /* Full height minus top bar height */
+        padding-top: 1rem;
+    }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75); /* Light text for links */
+            border-radius: 4px;
+            margin: 0.25rem 0;
+        }
+
+            .sidebar .nav-link:hover {
+                color: rgba(255, 255, 255, 1);
+                background-color: rgba(255,255,255,0.1);
+            }
+
+            .sidebar .nav-link.active {
+                color: white;
+                font-weight: bold;
+                background-color: #1abc9c; /* Active link background color */
+            }
+
+    /* For Open Iconic icons if you're using them */
+    .oi {
+        margin-right: 0.5rem;
+    }
+</style>
+
 @code {
-    private string? currentUrl;
+    private bool collapseNavMenu = true;
 
-    protected override void OnInitialized()
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    private void ToggleNavMenu()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        collapseNavMenu = !collapseNavMenu;
     }
 }
-
